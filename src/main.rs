@@ -63,8 +63,6 @@ fn prepare_pipeline_state(
 }
 
 fn prepare_render_pass_descriptor(descriptor: &RenderPassDescriptorRef, texture: &TextureRef) {
-    //descriptor.color_attachments().set_object_at(0, MTLRenderPassColorAttachmentDescriptor::alloc());
-    //let color_attachment: MTLRenderPassColorAttachmentDescriptor = unsafe { msg_send![descriptor.color_attachments().0, _descriptorAtIndex:0] };//descriptor.color_attachments().object_at(0);
     let color_attachment = descriptor.color_attachments().object_at(0).unwrap();
 
     color_attachment.set_texture(Some(texture));
@@ -112,7 +110,6 @@ fn main() {
     );
 
     let command_queue = device.new_command_queue();
-    //let nc: () = msg_send![command_queue.0, setExecutionEnabled:true];
 
     let vbuf = {
         let vertex_data = [
