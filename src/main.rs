@@ -1,5 +1,8 @@
+mod device;
+
 use cocoa::{appkit::NSView, base::id as cocoa_id};
 use core_graphics_types::geometry::CGSize;
+use device::Device as CDevice;
 use metal::*;
 use objc::{rc::autoreleasepool, runtime::YES};
 use std::mem;
@@ -81,10 +84,10 @@ fn main() {
         .build(&events_loop)
         .unwrap();
 
-    let device = Device::system_default().expect("no device found");
+    let device = CDevice::new().expect("no device found");
 
     let layer = MetalLayer::new();
-    layer.set_device(&device);
+    layer.set_device(device.raw());
     layer.set_pixel_format(MTLPixelFormat::BGRA8Unorm);
     layer.set_presents_with_transaction(false);
 
@@ -99,24 +102,28 @@ fn main() {
 
     let library_path = std::path::PathBuf::from("shaders/lib/triangle.metallib");
 
-    let library = device.new_library_with_file(library_path).unwrap();
-    let triangle_pipeline_state =
-        prepare_pipeline_state(&device, &library, "triangle_vertex", "triangle_fragment");
+    let library = device.raw().new_library_with_file(library_path).unwrap();
+    let triangle_pipeline_state = prepare_pipeline_state(
+        device.raw(),
+        &library,
+        "triangle_vertex",
+        "triangle_fragment",
+    );
     let clear_rect_pipeline_state = prepare_pipeline_state(
-        &device,
+        device.raw(),
         &library,
         "clear_rect_vertex",
         "clear_rect_fragment",
     );
 
-    let command_queue = device.new_command_queue();
+    let command_queue = device.raw().new_command_queue();
 
     let vbuf = {
         let vertex_data = [
             0.0f32, 0.5, 1.0, 0.0, 0.0, -0.5, -0.5, 0.0, 1.0, 0.0, 0.5, 0.5, 0.0, 0.0, 1.0,
         ];
 
-        device.new_buffer_with_data(
+        device.raw().new_buffer_with_data(
             vertex_data.as_ptr() as *const _,
             (vertex_data.len() * mem::size_of::<f32>()) as u64,
             MTLResourceOptions::CPUCacheModeDefaultCache | MTLResourceOptions::StorageModeManaged,
@@ -140,7 +147,7 @@ fn main() {
         },
     }];
 
-    let clear_rect_buffer = device.new_buffer_with_data(
+    let clear_rect_buffer = device.raw().new_buffer_with_data(
         clear_rect.as_ptr() as *const _,
         mem::size_of::<ClearRect>() as u64,
         MTLResourceOptions::CPUCacheModeDefaultCache | MTLResourceOptions::StorageModeManaged,
